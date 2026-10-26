@@ -1,0 +1,196 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>海産物 商品カタログ</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      color: #26352e;
+      background: #f5f7f5;
+    }
+    header {
+      background: #244638;
+      color: white;
+      padding: 32px 20px;
+    }
+    header, main {
+      padding-left: max(20px, calc((100% - 1100px) / 2));
+      padding-right: max(20px, calc((100% - 1100px) / 2));
+    }
+    header p { margin-bottom: 0; color: #d8e5dd; }
+    main { padding-top: 24px; padding-bottom: 50px; }
+    input, select {
+      padding: 12px;
+      border: 1px solid #ccd5ce;
+      border-radius: 8px;
+      background: white;
+      font-size: 16px;
+      width: 100%;
+    }
+    .filters {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 18px;
+    }
+    .card {
+      background: white;
+      border: 1px solid #e0e6e1;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .photo {
+      height: 165px;
+      background: #e8eee9;
+      display: grid;
+      place-items: center;
+      color: #607568;
+      font-size: 44px;
+    }
+    .info { padding: 16px; }
+    .category { font-size: 12px; color: #567260; }
+    .info h2 { font-size: 19px; margin: 8px 0; }
+    .info p { font-size: 14px; line-height: 1.7; }
+    button {
+      border: 0;
+      border-radius: 7px;
+      padding: 11px 14px;
+      background: #244638;
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .detail { margin-top: 12px; width: 100%; }
+    .empty { padding: 30px 0; }
+    dialog {
+      max-width: 500px;
+      width: calc(100% - 32px);
+      border: 0;
+      border-radius: 12px;
+      padding: 24px;
+    }
+    dialog::backdrop { background: #0008; }
+    .close { background: #68766e; }
+    @media (max-width: 520px) {
+      .filters { grid-template-columns: 1fr; }
+      header { padding-top: 24px; padding-bottom: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <p>SEAFOOD PRODUCT CATALOG</p>
+      <h1>海産物 商品カタログ</h1>
+      <p>商品情報を、わかりやすく。</p>
+    </div>
+  </header>
+
+  <main>
+    <div class="filters">
+      <input id="search" placeholder="商品名・商品コードで検索">
+      <select id="category">
+        <option value="">すべてのカテゴリ</option>
+        <option>魚</option>
+        <option>カニ</option>
+        <option>エビ・イカ</option>
+        <option>貝類</option>
+        <option>その他</option>
+      </select>
+    </div>
+
+    <p id="count"></p>
+    <div class="grid" id="products"></div>
+
+    <dialog id="detail">
+      <div id="detailContent"></div>
+      <button class="close" onclick="document.getElementById('detail').close()">閉じる</button>
+    </dialog>
+  </main>
+
+  <script>
+    // サンプル商品です。あとから実際の商品情報に変更できます。
+    const items = [
+      { code: "SAMPLE-001", name: "真ホッケ", category: "魚",
+        spec: "内容量：未登録", storage: "保存方法：未登録",
+        description: "商品情報をここに登録します。" },
+      { code: "SAMPLE-002", name: "ホタテ玉冷", category: "貝類",
+        spec: "内容量：未登録", storage: "保存方法：未登録",
+        description: "商品情報をここに登録します。" },
+      { code: "SAMPLE-003", name: "ボイルタラバガニ", category: "カニ",
+        spec: "内容量：未登録", storage: "保存方法：未登録",
+        description: "商品情報をここに登録します。" },
+      { code: "SAMPLE-004", name: "赤エビ", category: "エビ・イカ",
+        spec: "内容量：未登録", storage: "保存方法：未登録",
+        description: "商品情報をここに登録します。" }
+    ];
+
+    const products = document.getElementById("products");
+    const search = document.getElementById("search");
+    const category = document.getElementById("category");
+
+    function showProducts() {
+      const word = search.value.trim().toLowerCase();
+      const filtered = items.filter(item =>
+        (item.name + item.code).toLowerCase().includes(word) &&
+        (!category.value || item.category === category.value)
+      );
+
+      document.getElementById("count").textContent =
+        `${filtered.length} 件の商品`;
+
+      products.innerHTML = "";
+
+      if (!filtered.length) {
+        products.innerHTML = '<p class="empty">商品が見つかりませんでした。</p>';
+        return;
+      }
+
+      filtered.forEach(item => {
+        const card = document.createElement("article");
+        card.className = "card";
+        card.innerHTML = `
+          <div class="photo" aria-label="商品画像">🐟</div>
+          <div class="info">
+            <span class="category">${item.category}</span>
+            <h2></h2>
+            <p></p>
+            <button class="detail">商品詳細を見る</button>
+          </div>`;
+        card.querySelector("h2").textContent = item.name;
+        card.querySelector("p").textContent = item.spec;
+        card.querySelector("button").addEventListener("click", () => {
+          const content = document.getElementById("detailContent");
+          content.replaceChildren();
+          const title = document.createElement("h2");
+          title.textContent = item.name;
+          content.appendChild(title);
+          [ "商品コード：" + item.code, item.category,
+            item.spec, item.storage, item.description
+          ].forEach(text => {
+            const p = document.createElement("p");
+            p.textContent = text;
+            content.appendChild(p);
+          });
+          document.getElementById("detail").showModal();
+        });
+        products.appendChild(card);
+      });
+    }
+
+    search.addEventListener("input", showProducts);
+    category.addEventListener("change", showProducts);
+    showProducts();
+  </script>
+</body>
+</html>
